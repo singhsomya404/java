@@ -1,0 +1,31 @@
+# Maven build target directory
+target/
+*.class
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Log files
+*.log
+
+# IDE and Editor files
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.project
+.classpath
+.DS_Store
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini

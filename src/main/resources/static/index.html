@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Attendance Management System</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ===============================================================
+       1. AUTHENTICATION / LOGIN VIEW
+       =============================================================== -->
+  <section id="authSection">
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="brand-icon-box">🎓</div>
+        <h1>Attendance Portal</h1>
+        <p>Student Attendance Management System</p>
+      </div>
+
+      <div id="loginError" class="advisor-alert critical" style="display: none; margin-bottom: 16px;"></div>
+
+      <form id="loginForm">
+        <div style="margin-bottom: 16px;">
+          <label class="form-label" for="loginUsername">Username or Roll Number</label>
+          <input type="text" id="loginUsername" placeholder="e.g. admin or CS202601" required autocomplete="username">
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <label class="form-label" for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px;">
+          Sign In to Dashboard →
+        </button>
+      </form>
+
+      <!-- Quick Demo Credentials -->
+      <div class="demo-pills">
+        <span class="demo-pills-title">Quick Demo Login:</span>
+        <div class="pill-chips">
+          <div class="pill-chip" onclick="fillDemo('admin', 'admin123')">
+            <strong>Admin / Teacher</strong><br><small>admin / admin123</small>
+          </div>
+          <div class="pill-chip" onclick="fillDemo('CS202601', 'student123')">
+            <strong>Student</strong><br><small>CS202601 / student123</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===============================================================
+       2. MAIN DASHBOARD VIEW
+       =============================================================== -->
+  <section id="appSection">
+    <!-- Top Navbar -->
+    <header class="navbar">
+      <div class="nav-brand">
+        <span style="font-size: 1.4rem;">🎓</span>
+        <span>Attendance Hub</span>
+        <span id="navRoleBadge" class="nav-brand-badge">SAMS</span>
+      </div>
+
+      <div class="nav-user">
+        <div class="user-profile-meta">
+          <div class="name" id="navUserName">User Name</div>
+          <div class="role" id="navUserRole">ROLE</div>
+        </div>
+        <button id="logoutBtn" class="btn btn-secondary btn-sm" title="Sign out">
+          Sign Out ↪
+        </button>
+      </div>
+    </header>
+
+    <div class="app-body">
+      <!-- Left Sidebar Navigation -->
+      <aside class="sidebar">
+        <!-- Admin Menu -->
+        <div class="sidebar-title admin-nav-item">Faculty & Admin</div>
+        <a class="nav-link admin-nav-item active" data-tab="admin-dashboard">
+          <span>📊</span> Dashboard
+        </a>
+        <a class="nav-link admin-nav-item" data-tab="admin-students">
+          <span>👥</span> Students & Enroll
+        </a>
+        <a class="nav-link admin-nav-item" data-tab="admin-mark">
+          <span>📝</span> Mark Attendance
+        </a>
+        <a class="nav-link admin-nav-item" data-tab="admin-analytics">
+          <span>📈</span> Attendance % & Defaulters
+        </a>
+        <a class="nav-link admin-nav-item" data-tab="admin-reports">
+          <span>📄</span> Attendance Reports
+        </a>
+
+        <!-- Student Menu -->
+        <div class="sidebar-title student-nav-item">Student Portal</div>
+        <a class="nav-link student-nav-item active" data-tab="student-dashboard">
+          <span>🎯</span> My Attendance
+        </a>
+        <a class="nav-link student-nav-item" data-tab="student-history">
+          <span>📜</span> Attendance Logs
+        </a>
+      </aside>
+
+      <!-- Main Content Area -->
+      <main class="content-area">
+
+        <!-- =========================================================
+             A. Admin: Dashboard Overview
+             ========================================================= -->
+        <div id="admin-dashboard" class="tab-pane active">
+          <div class="card-header" style="margin-bottom: 24px;">
+            <div>
+              <h2>Faculty Dashboard</h2>
+              <p class="text-muted">Real-time attendance overview and system health</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button class="btn btn-primary" onclick="switchTab('admin-mark')">📝 Mark Attendance</button>
+              <button class="btn btn-secondary" onclick="openAddStudentModal()">+ Add Student</button>
+            </div>
+          </div>
+
+          <!-- Stats Grid -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon primary">👥</div>
+              <div class="stat-data">
+                <div class="value" id="statTotalStudents">-</div>
+                <div class="label">Total Students Enrolled</div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon success">📚</div>
+              <div class="stat-data">
+                <div class="value" id="statTotalCourses">-</div>
+                <div class="label">Active Courses / Subjects</div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon danger">⚠️</div>
+              <div class="stat-data">
+                <div class="value" id="statShortageCount">-</div>
+                <div class="label">Students Below 75%</div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon warning">📊</div>
+              <div class="stat-data">
+                <div class="value" id="statAverageAttendance">-</div>
+                <div class="label">Average Attendance Rate</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Attendance Table -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Recent Attendance Entries</h3>
+              <button class="btn btn-secondary btn-sm" onclick="switchTab('admin-reports')">View All Records →</button>
+            </div>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Course</th>
+                    <th>Student</th>
+                    <th>Status</th>
+                    <th>Remarks</th>
+                  </tr>
+                </thead>
+                <tbody id="recentAttendanceTableBody">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- =========================================================
+             B. Admin: Manage Students
+             ========================================================= -->
+        <div id="admin-students" class="tab-pane">
+          <div class="card-header">
+            <div>
+              <h2>Students Management</h2>
+              <p class="text-muted">Register, manage student profiles, and view individual attendance summaries</p>
+            </div>
+            <button class="btn btn-primary" onclick="openAddStudentModal()">+ Add New Student</button>
+          </div>
+
+          <!-- Filter / Search Bar -->
+          <div class="card" style="padding: 16px; margin-bottom: 20px;">
+            <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+              <div style="flex: 2; min-width: 200px;">
+                <input type="text" id="studentSearchInput" placeholder="🔍 Search by Roll Number, Name, or Email..." oninput="filterStudentsTable()">
+              </div>
+              <div style="flex: 1; min-width: 160px;">
+                <select id="studentDeptFilter" onchange="filterStudentsTable()">
+                  <option value="">All Departments</option>
+                  <option value="Computer Science">Computer Science</option>
+                  <option value="Information Technology">Information Technology</option>
+                  <option value="Electronics">Electronics</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Students Table -->
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Roll Number</th>
+                  <th>Full Name</th>
+                  <th>Department</th>
+                  <th>Semester</th>
+                  <th>Email</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="studentsTableBody">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- =========================================================
+             C. Admin: Mark Attendance
+             ========================================================= -->
+        <div id="admin-mark" class="tab-pane">
+          <div class="card-header">
+            <div>
+              <h2>Mark Attendance</h2>
+              <p class="text-muted">Select course and date to record or update attendance for students</p>
+            </div>
+          </div>
+
+          <!-- Selection Controls -->
+          <div class="card">
+            <div class="form-grid" style="align-items: flex-end; margin-bottom: 0;">
+              <div>
+                <label class="form-label" for="attendanceCourse">Select Course / Subject *</label>
+                <select id="attendanceCourse"></select>
+              </div>
+
+              <div>
+                <label class="form-label" for="attendanceDate">Attendance Date *</label>
+                <input type="date" id="attendanceDate">
+              </div>
+
+              <div>
+                <button type="button" id="loadSheetBtn" class="btn btn-primary" style="width: 100%;" onclick="loadAttendanceSheet()">
+                  Load Class Sheet 📋
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Attendance Sheet Container -->
+          <div id="attendanceSheetContainer" class="card" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+              <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="markAll('PRESENT')">✓ Mark All Present</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="markAll('ABSENT')">✕ Mark All Absent</button>
+              </div>
+              <button type="button" id="saveAttendanceBtn" class="btn btn-success" onclick="saveAttendanceSheet()">
+                💾 Save Attendance
+              </button>
+            </div>
+
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Roll Number</th>
+                    <th>Student Name</th>
+                    <th>Attendance Status</th>
+                    <th>Remarks</th>
+                  </tr>
+                </thead>
+                <tbody id="attendanceSheetBody">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- =========================================================
+             D. Admin: Attendance % & Defaulters
+             ========================================================= -->
+        <div id="admin-analytics" class="tab-pane">
+          <div class="card-header">
+            <div>
+              <h2>Attendance Percentage & Defaulters</h2>
+              <p class="text-muted">Track overall student percentages and identify students below mandatory attendance limits</p>
+            </div>
+            <span id="defaulterCountBadge" class="badge badge-critical" style="font-size: 0.85rem; padding: 6px 14px;">-</span>
+          </div>
+
+          <!-- Filters -->
+          <div class="card" style="padding: 16px;">
+            <div class="form-grid" style="margin-bottom: 0; align-items: flex-end;">
+              <div>
+                <label class="form-label" for="analyticsCourse">Filter by Course</label>
+                <select id="analyticsCourse" onchange="loadAnalyticsData()"></select>
+              </div>
+              <div>
+                <label class="form-label" for="analyticsThreshold">Threshold Percentage (%)</label>
+                <select id="analyticsThreshold" onchange="loadAnalyticsData()">
+                  <option value="75.0" selected>75% (Mandatory College Standard)</option>
+                  <option value="80.0">80%</option>
+                  <option value="65.0">65% (Critical Shortage)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Defaulters Table -->
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Roll Number</th>
+                  <th>Student Name</th>
+                  <th>Department & Sem</th>
+                  <th>Attended / Total</th>
+                  <th style="min-width: 180px;">Attendance %</th>
+                  <th>Status & Recovery</th>
+                </tr>
+              </thead>
+              <tbody id="analyticsTableBody">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- =========================================================
+             E. Admin: Reports Generation & CSV Export
+             ========================================================= -->
+        <div id="admin-reports" class="tab-pane">
+          <div class="card-header">
+            <div>
+              <h2>Generate Attendance Reports</h2>
+              <p class="text-muted">Comprehensive attendance summaries, date range filters, and CSV export</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-secondary" onclick="window.print()">🖨️ Print Report</button>
+              <button class="btn btn-primary" onclick="exportCsv()">📥 Export to CSV</button>
+            </div>
+          </div>
+
+          <!-- Report Filter Bar -->
+          <div class="card filter-bar">
+            <div class="form-grid" style="margin-bottom: 16px;">
+              <div>
+                <label class="form-label" for="reportCourse">Course</label>
+                <select id="reportCourse"></select>
+              </div>
+              <div>
+                <label class="form-label" for="reportStudent">Student</label>
+                <select id="reportStudent"></select>
+              </div>
+              <div>
+                <label class="form-label" for="reportStartDate">Start Date</label>
+                <input type="date" id="reportStartDate">
+              </div>
+              <div>
+                <label class="form-label" for="reportEndDate">End Date</label>
+                <input type="date" id="reportEndDate">
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="generateReport()">Generate Report 📊</button>
+          </div>
+
+          <!-- Report Summary Cards -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon primary">📋</div>
+              <div class="stat-data">
+                <div class="value" id="reportTotalClasses">0</div>
+                <div class="label">Total Records</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon success">✓</div>
+              <div class="stat-data">
+                <div class="value" id="reportTotalPresent">0</div>
+                <div class="label">Total Present</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon danger">✕</div>
+              <div class="stat-data">
+                <div class="value" id="reportTotalAbsent">0</div>
+                <div class="label">Total Absent</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon warning">🎯</div>
+              <div class="stat-data">
+                <div class="value" id="reportOverallPct">0%</div>
+                <div class="label">Overall Attendance %</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detailed Records Table -->
+          <div class="card">
+            <h3 class="card-title" style="margin-bottom: 16px;">Detailed Attendance Records</h3>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Course</th>
+                    <th>Roll Number</th>
+                    <th>Student Name</th>
+                    <th>Status</th>
+                    <th>Remarks</th>
+                  </tr>
+                </thead>
+                <tbody id="reportTableBody">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- =========================================================
+             F. Student Portal: My Attendance Dashboard
+             ========================================================= -->
+        <div id="student-dashboard" class="tab-pane">
+          <!-- Hero Banner with Radial Gauge -->
+          <div class="student-hero-banner">
+            <div class="student-info-col">
+              <h2 id="studentHeroName">Student Name</h2>
+              <div class="student-meta-chips">
+                <span class="meta-chip" id="studentHeroRoll">Roll: -</span>
+                <span class="meta-chip" id="studentHeroDept">Department</span>
+                <span class="meta-chip">Active Semester</span>
+              </div>
+            </div>
+
+            <!-- Radial Progress Gauge -->
+            <div class="percentage-gauge-box">
+              <div class="radial-meter">
+                <svg>
+                  <circle class="bg-circle" cx="45" cy="45" r="40"></circle>
+                  <circle id="studentRadialCircle" class="progress-circle" cx="45" cy="45" r="40"></circle>
+                </svg>
+                <div id="studentRadialText" class="meter-text">0%</div>
+              </div>
+              <div>
+                <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.85;">Total Attendance</div>
+                <div style="font-size: 1.1rem; font-weight: 700;">Percentage Score</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Smart Advisor Alert Box -->
+          <div id="studentAdvisorBox" class="advisor-alert good">
+            <!-- Dynamically populated -->
+          </div>
+
+          <!-- Key Stats Cards -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon primary">📅</div>
+              <div class="stat-data">
+                <div class="value" id="studentTotalClasses">0</div>
+                <div class="label">Total Classes Conducted</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon success">✓</div>
+              <div class="stat-data">
+                <div class="value" id="studentAttendedClasses">0</div>
+                <div class="label">Classes Attended</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon danger">✕</div>
+              <div class="stat-data">
+                <div class="value" id="studentAbsentClasses">0</div>
+                <div class="label">Classes Missed</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Subject-wise Breakdown -->
+          <div class="card-header" style="margin-top: 12px;">
+            <h3>Subject-wise Attendance Breakdown</h3>
+          </div>
+          <div id="studentSubjectCards">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- =========================================================
+             G. Student Portal: Attendance History / Logs
+             ========================================================= -->
+        <div id="student-history" class="tab-pane">
+          <div class="card-header">
+            <div>
+              <h2>Attendance Logs & History</h2>
+              <p class="text-muted">Chronological record of all past lectures and your attendance status</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <select id="historyCourseFilter" onchange="loadStudentHistoryView()" style="width: auto;">
+                <option value="">All Subjects</option>
+              </select>
+              <button class="btn btn-secondary" onclick="window.print()">🖨️ Print</button>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Date</th>
+                  <th>Subject</th>
+                  <th>Attendance Status</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody id="studentHistoryTableBody">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </section>
+
+  <!-- ===============================================================
+       3. MODALS
+       =============================================================== -->
+  <!-- Add Student Modal -->
+  <div id="addStudentModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Register New Student</h3>
+        <button class="modal-close" onclick="closeAddStudentModal()">✕</button>
+      </div>
+
+      <form id="addStudentForm">
+        <div class="form-grid">
+          <div>
+            <label class="form-label" for="newStudentRoll">Roll Number *</label>
+            <input type="text" id="newStudentRoll" placeholder="e.g. CS202610" required>
+          </div>
+          <div>
+            <label class="form-label" for="newStudentName">Full Name *</label>
+            <input type="text" id="newStudentName" placeholder="e.g. Somya Singh" required>
+          </div>
+
+          <div>
+            <label class="form-label" for="newStudentEmail">Email Address *</label>
+            <input type="email" id="newStudentEmail" placeholder="somya@college.edu" required>
+          </div>
+          <div>
+            <label class="form-label" for="newStudentPhone">Phone Number</label>
+            <input type="tel" id="newStudentPhone" placeholder="+91 9876543210">
+          </div>
+
+          <div>
+            <label class="form-label" for="newStudentDept">Department *</label>
+            <select id="newStudentDept" required>
+              <option value="Computer Science">Computer Science</option>
+              <option value="Information Technology">Information Technology</option>
+              <option value="Electronics">Electronics</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" for="newStudentSem">Semester *</label>
+            <select id="newStudentSem" required>
+              <option value="1">Semester 1</option>
+              <option value="2">Semester 2</option>
+              <option value="3">Semester 3</option>
+              <option value="4" selected>Semester 4</option>
+              <option value="5">Semester 5</option>
+              <option value="6">Semester 6</option>
+              <option value="7">Semester 7</option>
+              <option value="8">Semester 8</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="form-label" for="newStudentSec">Section</label>
+            <input type="text" id="newStudentSec" value="A">
+          </div>
+          <div>
+            <label class="form-label" for="newStudentPass">Login Password</label>
+            <input type="password" id="newStudentPass" placeholder="Default: student123">
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+          <button type="button" class="btn btn-secondary" onclick="closeAddStudentModal()">Cancel</button>
+          <button type="submit" id="saveStudentBtn" class="btn btn-primary">Save Student</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Student Summary Modal -->
+  <div id="studentSummaryModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 620px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalStudentSummaryName">Student Summary</h3>
+        <button class="modal-close" onclick="closeStudentSummaryModal()">✕</button>
+      </div>
+
+      <div class="stats-grid" style="margin-bottom: 20px;">
+        <div class="stat-card" style="padding: 14px;">
+          <div class="stat-data">
+            <div class="value" id="modalStudentSummaryPct" style="color: var(--primary);">-</div>
+            <div class="label">Overall Attendance</div>
+          </div>
+        </div>
+        <div class="stat-card" style="padding: 14px;">
+          <div class="stat-data">
+            <div class="value" id="modalStudentSummaryAttended">-</div>
+            <div class="label">Attended / Total</div>
+          </div>
+        </div>
+        <div class="stat-card" style="padding: 14px;">
+          <div class="stat-data">
+            <div class="value" id="modalStudentSummaryAbsent" style="color: var(--danger);">-</div>
+            <div class="label">Absent Count</div>
+          </div>
+        </div>
+      </div>
+
+      <h4 style="margin-bottom: 12px; font-size: 0.95rem;">Subject-wise Details:</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Subject</th>
+              <th>Classes</th>
+              <th>%</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="modalStudentSubjectsBody">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <div style="margin-top: 20px; text-align: right;">
+        <button class="btn btn-secondary" onclick="closeStudentSummaryModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer"></div>
+
+  <!-- Application Script -->
+  <script src="js/app.js"></script>
+</body>
+</html>
